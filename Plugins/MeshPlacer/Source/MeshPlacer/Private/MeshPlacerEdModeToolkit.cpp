@@ -3,9 +3,13 @@
 #include "MeshPlacerEdModeToolkit.h"
 #include "MeshPlacerEdMode.h"
 #include "Engine/Selection.h"
+#include "Engine/World.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/STextBlock.h"
 #include "EditorModeManager.h"
+#include "GameFramework/Actor.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
@@ -22,7 +26,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			return GEditor->GetSelectedActors()->Num() != 0;
 		}
 
-		static FReply OnButtonClick(FVector InOffset)
+		static FReply OnButtonClick()
 		{
 			USelection* SelectedActors = GEditor->GetSelectedActors();
 
@@ -35,9 +39,23 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 				if (AActor* LevelActor = Cast<AActor>(*Iter))
 				{
 					// Register actor in opened transaction (undo/redo)
-					LevelActor->Modify();
+					//LevelActor->Modify();
 					// Move actor to given location
-					LevelActor->TeleportTo(LevelActor->GetActorLocation() + InOffset, FRotator(0, 0, 0));
+					//LevelActor->TeleportTo(LevelActor->GetActorLocation() + InOffset, FRotator(0, 0, 0));
+
+					AStaticMeshActor * ActorToSpawn = Cast<AStaticMeshActor>(*Iter);
+					UClass * ClassToSpawn = ActorToSpawn->GetClass();
+
+					for (int i = 0; i < 5; i++)
+					{
+						FActorSpawnParameters SpawnParams;
+						FRotator Rot(0.0, 0.0, 0.0);
+						FVector Trans(5.0, 5.0, 5.0);
+						FVector Scale(1.0, 1.0, 1.0);
+						FTransform Transform(Rot, Trans, Scale);
+						
+						AStaticMeshActor * SpawnedActorRef = GEditor->GetWorld()->SpawnActorAbsolute<AStaticMeshActor>(ClassToSpawn, Transform, SpawnParams);
+					}
 				}
 			}
 
@@ -47,11 +65,11 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			return FReply::Handled();
 		}
 
-		static TSharedRef<SWidget> MakeButton(FText InLabel, const FVector InOffset)
+		static TSharedRef<SWidget> MakeButton(FText InLabel)
 		{
 			return SNew(SButton)
 				.Text(InLabel)
-				.OnClicked_Static(&Locals::OnButtonClick, InOffset);
+				.OnClicked_Static(&Locals::OnButtonClick);
 		}
 	};
 
@@ -70,35 +88,14 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			[
 				SNew(STextBlock)
 				.AutoWrapText(true)
-				.Text(LOCTEXT("HelperLabel", "Select some actors and move them around using buttons below"))
+				.Text(LOCTEXT("HelperLabel", "Select an object to tile then press the Tile button"))
 			]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
 				[
-					Locals::MakeButton(LOCTEXT("UpButtonLabel", "Up"), FVector(0, 0, Factor))
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoHeight()
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					[
-						Locals::MakeButton(LOCTEXT("LeftButtonLabel", "Left"), FVector(0, -Factor, 0))
-					]
-					+ SHorizontalBox::Slot()
-						.AutoWidth()
-						[
-							Locals::MakeButton(LOCTEXT("RightButtonLabel", "Right"), FVector(0, Factor, 0))
-						]
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Center)
-				.AutoHeight()
-				[
-					Locals::MakeButton(LOCTEXT("DownButtonLabel", "Down"), FVector(0, 0, -Factor))
+					// This is the button to make the object tile
+					Locals::MakeButton(LOCTEXT("TileButtonLabel", "Tile"))
 				]
 
 		];

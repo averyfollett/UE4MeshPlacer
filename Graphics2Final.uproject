@@ -9,5 +9,11 @@
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
 		}
+	],
+	"Plugins": [
+		{
+			"Name": "AdvancedMaterialBlueprints",
+			"Enabled": false
+		}
 	]
 }
