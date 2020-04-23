@@ -49,7 +49,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 
 					
 					FActorSpawnParameters SpawnParams;
-					SpawnParams.Name = FName("DUPLICATED");
+					//SpawnParams.Name = FName("DUPLICATED");
 					SpawnParams.Template = LevelActor;
 					FRotator Rot(0.0, 0.0, 0.0);
 					FVector Trans(5.0, 5.0, 5.0);
