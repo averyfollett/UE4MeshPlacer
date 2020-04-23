@@ -20,7 +20,13 @@ public:
 	virtual class FEdMode* GetEditorMode() const override;
 	virtual TSharedPtr<class SWidget> GetInlineContent() const override { return ToolkitWidget; }
 
+	/** Custom Functions */
+	FReply OnButtonClick();
+	TOptional<int32> GetCopies() const;
+	void SetCopies(int32 c);
+
 private:
 
 	TSharedPtr<SWidget> ToolkitWidget;
+	int32 numCopies;
 };
