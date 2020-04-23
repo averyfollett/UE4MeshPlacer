@@ -10,6 +10,7 @@
 #include "GameFramework/Actor.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
+#include "Engine/StaticMeshActor.h"
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
@@ -36,26 +37,37 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			// For each selected actor
 			for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
 			{
-				if (AActor* LevelActor = Cast<AActor>(*Iter))
+				if (AStaticMeshActor* LevelActor = Cast<AStaticMeshActor>(*Iter))
 				{
 					// Register actor in opened transaction (undo/redo)
 					//LevelActor->Modify();
 					// Move actor to given location
 					//LevelActor->TeleportTo(LevelActor->GetActorLocation() + InOffset, FRotator(0, 0, 0));
 
-					AStaticMeshActor * ActorToSpawn = Cast<AStaticMeshActor>(*Iter);
-					UClass * ClassToSpawn = ActorToSpawn->GetClass();
+					AStaticMeshActor* ActorToSpawn = LevelActor;
+					//UClass * ClassToSpawn = ActorToSpawn->GetClass();
 
-					for (int i = 0; i < 5; i++)
-					{
-						FActorSpawnParameters SpawnParams;
-						FRotator Rot(0.0, 0.0, 0.0);
-						FVector Trans(5.0, 5.0, 5.0);
-						FVector Scale(1.0, 1.0, 1.0);
-						FTransform Transform(Rot, Trans, Scale);
+					
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.Name = FName("DUPLICATED");
+					SpawnParams.Template = LevelActor;
+					FRotator Rot(0.0, 0.0, 0.0);
+					FVector Trans(5.0, 5.0, 5.0);
+					FVector Scale(1.0, 1.0, 1.0);
+					FTransform Transform(Rot, Trans, Scale);
 						
-						AStaticMeshActor * SpawnedActorRef = GEditor->GetWorld()->SpawnActorAbsolute<AStaticMeshActor>(ClassToSpawn, Transform, SpawnParams);
-					}
+					AStaticMeshActor* SpawnedActor = nullptr;
+					GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT(""));
+					
+					if (IsValid(LevelActor->GetWorld()))
+						GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("world valid"));
+
+					if (IsValid(ActorToSpawn->GetClass()))
+						GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("class valid"));
+
+
+					SpawnedActor = LevelActor->GetWorld()->SpawnActorAbsolute<AStaticMeshActor>(ActorToSpawn->GetClass(), ActorToSpawn->GetTransform(), SpawnParams);
+					
 				}
 			}
 
