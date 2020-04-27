@@ -22,11 +22,20 @@ public:
 
 	/** Custom Functions */
 	FReply OnButtonClick();
-	TOptional<int32> GetCopies() const;
-	void SetCopies(int32 c);
+	TOptional<int32> GetXCopies() const;
+	TOptional<int32> GetYCopies() const;
+	TOptional<int32> GetZCopies() const;
+	TOptional<float> GetDistanceBetweenActors() const;
+	void SetXCopies(int32 c);
+	void SetYCopies(int32 c);
+	void SetZCopies(int32 c);
+	void SetDistanceBetweenActors(float d);
 
 private:
 
 	TSharedPtr<SWidget> ToolkitWidget;
-	int32 numCopies;
+
+	/** Custom Variables */
+	int32 numXCopies, numYCopies, numZCopies;
+	float distanceBetweenActors;
 };

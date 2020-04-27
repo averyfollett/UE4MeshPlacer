@@ -30,11 +30,10 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 		}
 	};
 
-	const float Factor = 256.0f;
 
 	SAssignNew(ToolkitWidget, SBorder)
 		.HAlign(HAlign_Center)
-		.Padding(25)
+		.Padding(20)
 		.IsEnabled_Static(&Locals::IsWidgetEnabled)
 		[
 			SNew(SVerticalBox)
@@ -47,23 +46,100 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 				.AutoWrapText(true)
 				.Text(LOCTEXT("HelperLabel", "Select an object to tile then press the Tile button"))
 			]
+
+
+
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(STextBlock)
+					.AutoWrapText(true)
+					.Text(LOCTEXT("XCopiesHelperLabel", "X Copies:"))
+				]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
 				[
 					SNew(SNumericEntryBox<int32>)
-					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetCopies)
-					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetCopies)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetXCopies)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetXCopies)
+					.AllowSpin(true)
 				]
+
+
+
 			+SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
-					[
+				[
+					SNew(STextBlock)
+					.AutoWrapText(true)
+					.Text(LOCTEXT("YCopiesHelperLabel", "Y Copies:"))
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(SNumericEntryBox<int32>)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetYCopies)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetYCopies)
+					.AllowSpin(true)
+				]
+
+
+
+			+SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(STextBlock)
+					.AutoWrapText(true)
+					.Text(LOCTEXT("ZCopiesHelperLabel", "Z Copies:"))
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(SNumericEntryBox<int32>)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetZCopies)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetZCopies)
+					.AllowSpin(true)
+				]
+
+
+
+			+SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				.Padding(0.0, 20.0, 0.0, 0.0)
+				[
+					SNew(STextBlock)
+					.AutoWrapText(true)
+					.Text(LOCTEXT("DistanceHelperLabel", "Offset Distance:"))
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(SNumericEntryBox<float>)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetDistanceBetweenActors)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetDistanceBetweenActors)
+					.AllowSpin(true)
+				]
+
+
+
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				.Padding(0.0, 20.0, 0.0, 0.0)
+				[
 					// This is the button to make the object tile
 					SNew(SButton)
 					.Text(LOCTEXT("TileButtonLabel", "Click to Tile!"))
 					.OnClicked_Raw(this, &FMeshPlacerEdModeToolkit::OnButtonClick)
-					]
+				]
 		];
 		
 	FModeToolkit::Init(InitToolkitHost);
@@ -81,42 +157,36 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 	{
 		if (AStaticMeshActor* LevelActor = Cast<AStaticMeshActor>(*Iter))
 		{
-			// Register actor in opened transaction (undo/redo)
-			//LevelActor->Modify();
-			// Move actor to given location
-			//LevelActor->TeleportTo(LevelActor->GetActorLocation() + InOffset, FRotator(0, 0, 0));
 
 			AStaticMeshActor* ActorToSpawn = LevelActor;
-			//UClass * ClassToSpawn = ActorToSpawn->GetClass();
-
 
 			FActorSpawnParameters SpawnParams;
 			//SpawnParams.Name = FName("DUPLICATED");
 			SpawnParams.Template = LevelActor;
+
 			FRotator Rot(0.0, 0.0, 0.0);
 			FVector Trans(5.0, 5.0, 5.0);
 			FVector Scale(1.0, 1.0, 1.0);
 			FTransform Transform(Rot, Trans, Scale);
 
-
-
-			/*if (IsValid(LevelActor->GetWorld()))
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("world valid"));
-
-			if (IsValid(ActorToSpawn->GetClass()))
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("class valid"));*/
-
-
-			float distance = 100.0;
+			AStaticMeshActor* SpawnedActor = nullptr;
 
 			// for loop for each copy of staticmeshactor
-			for (int i = 1; i <= numCopies; i++)
+			for (int x = 0; x <= numXCopies; x++)
 			{
-				AStaticMeshActor* SpawnedActor = nullptr;
-				//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT(""));
-				SpawnedActor = LevelActor->GetWorld()->SpawnActorAbsolute<AStaticMeshActor>(ActorToSpawn->GetClass(), ActorToSpawn->GetTransform(), SpawnParams);
+				for (int y = 0; y <= numYCopies; y++)
+				{
+					for (int z = 0; z <= numZCopies; z++)
+					{
+						SpawnedActor = LevelActor->GetWorld()->SpawnActorAbsolute<AStaticMeshActor>(
+							ActorToSpawn->GetClass(), ActorToSpawn->GetTransform(), SpawnParams);
 
-				SpawnedActor->SetActorLocation(FVector(SpawnedActor->GetActorLocation().X + (i * distance), SpawnedActor->GetActorLocation().Y, SpawnedActor->GetActorLocation().Z));
+						SpawnedActor->SetActorLocation(FVector(
+							SpawnedActor->GetActorLocation().X + (x * distanceBetweenActors), 
+							SpawnedActor->GetActorLocation().Y + (y * distanceBetweenActors),
+							SpawnedActor->GetActorLocation().Z + (z * distanceBetweenActors)));
+					}
+				}
 			}
 		}
 	}
@@ -127,14 +197,44 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 	return FReply::Handled();
 }
 
-TOptional<int32> FMeshPlacerEdModeToolkit::GetCopies() const
+TOptional<int32> FMeshPlacerEdModeToolkit::GetXCopies() const
 {
-	return numCopies;
+	return numXCopies;
 }
 
-void FMeshPlacerEdModeToolkit::SetCopies(int32 c)
+void FMeshPlacerEdModeToolkit::SetXCopies(int32 c)
 {
-	numCopies = c;
+	numXCopies = c;
+}
+
+TOptional<int32> FMeshPlacerEdModeToolkit::GetYCopies() const
+{
+	return numYCopies;
+}
+
+void FMeshPlacerEdModeToolkit::SetYCopies(int32 c)
+{
+	numYCopies = c;
+}
+
+TOptional<int32> FMeshPlacerEdModeToolkit::GetZCopies() const
+{
+	return numZCopies;
+}
+
+TOptional<float> FMeshPlacerEdModeToolkit::GetDistanceBetweenActors() const
+{
+	return distanceBetweenActors;
+}
+
+void FMeshPlacerEdModeToolkit::SetZCopies(int32 c)
+{
+	numZCopies = c;
+}
+
+void FMeshPlacerEdModeToolkit::SetDistanceBetweenActors(float d)
+{
+	distanceBetweenActors = d;
 }
 
 FName FMeshPlacerEdModeToolkit::GetToolkitFName() const
