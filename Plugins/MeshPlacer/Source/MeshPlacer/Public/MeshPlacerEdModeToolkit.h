@@ -28,10 +28,10 @@ public:
 	TOptional<int32> GetXCopies() const;
 	TOptional<int32> GetYCopies() const;
 	TOptional<int32> GetZCopies() const;
-	TOptional<float> GetDistanceBetweenActors() const;
 	void SetXCopies(int32 c);
 	void SetYCopies(int32 c);
 	void SetZCopies(int32 c);
+	TOptional<float> GetDistanceBetweenActors() const;
 	void SetDistanceBetweenActors(float d);
 	void MergeMeshes();
 

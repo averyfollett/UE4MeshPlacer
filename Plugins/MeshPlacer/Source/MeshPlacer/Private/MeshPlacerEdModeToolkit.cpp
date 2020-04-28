@@ -14,6 +14,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "Framework/SlateDelegates.h"
 
+//necessary for mesh merging
 #include "MeshMergeModule.h"
 #include "IMeshMergeUtilities.h"
 #include "Misc/ScopedSlowTask.h"
@@ -21,7 +22,6 @@
 #include "MeshUtilities.h"
 #include "Modules/ModuleManager.h"
 //#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
-
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
@@ -38,7 +38,6 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			return GEditor->GetSelectedActors()->Num() != 0;
 		}
 	};
-
 	
 	SAssignNew(ToolkitWidget, SBorder)
 		.HAlign(HAlign_Center)
@@ -276,8 +275,6 @@ void FMeshPlacerEdModeToolkit::MergeMeshes()
 	World->UpdateCullDistanceVolumes(MergedActor, MergedActor->GetStaticMeshComponent());
 
 	*/
-
-
 }
 
 FName FMeshPlacerEdModeToolkit::GetToolkitFName() const
