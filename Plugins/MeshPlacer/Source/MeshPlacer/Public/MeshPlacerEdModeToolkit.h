@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Toolkits/BaseToolkit.h"
+#include "UObject/ObjectMacros.h"
+#include "UObject/Object.h"
+#include "Widgets/SWidget.h"
 
 class FMeshPlacerEdModeToolkit : public FModeToolkit
 {
@@ -30,6 +33,7 @@ public:
 	void SetYCopies(int32 c);
 	void SetZCopies(int32 c);
 	void SetDistanceBetweenActors(float d);
+	void MergeMeshes();
 
 private:
 

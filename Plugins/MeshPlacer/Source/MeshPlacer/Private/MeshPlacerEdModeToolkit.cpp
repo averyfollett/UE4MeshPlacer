@@ -14,6 +14,15 @@
 #include "Engine/StaticMeshActor.h"
 #include "Framework/SlateDelegates.h"
 
+#include "MeshMergeModule.h"
+#include "IMeshMergeUtilities.h"
+#include "Misc/ScopedSlowTask.h"
+#include "MergeActors/Private/MergeProxyUtils/Utils.h"
+#include "MeshUtilities.h"
+#include "Modules/ModuleManager.h"
+//#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
+
+
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
 FMeshPlacerEdModeToolkit::FMeshPlacerEdModeToolkit()
@@ -30,7 +39,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 		}
 	};
 
-
+	
 	SAssignNew(ToolkitWidget, SBorder)
 		.HAlign(HAlign_Center)
 		.Padding(20)
@@ -157,7 +166,6 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 	{
 		if (AStaticMeshActor* LevelActor = Cast<AStaticMeshActor>(*Iter))
 		{
-
 			AStaticMeshActor* ActorToSpawn = LevelActor;
 
 			FActorSpawnParameters SpawnParams;
@@ -235,6 +243,41 @@ void FMeshPlacerEdModeToolkit::SetZCopies(int32 c)
 void FMeshPlacerEdModeToolkit::SetDistanceBetweenActors(float d)
 {
 	distanceBetweenActors = d;
+}
+
+void FMeshPlacerEdModeToolkit::MergeMeshes()
+{
+	// WORK IN PROGRESS
+	/**
+	const IMeshMergeUtilities& MeshUtilities = FModuleManager::Get().LoadModuleChecked<IMeshMergeModule>("MeshMergeUtilities").GetUtilities();
+
+	TArray<UPrimitiveComponent*> ComponentsToMerge; //The components that will be merged
+	UWorld* World = ComponentsToMerge[0]->GetWorld(); //Reference to the world
+	FMeshMergingSettings Settings; //Merging settings
+	Settings.bMergePhysicsData = true;
+	Settings.LODSelectionType = EMeshLODSelectionType::AllLODs;
+	FString PackageName = "OUTPUT";
+	TArray<UObject*> AssetsToSync;
+	FVector MergedActorLocation;
+	const float ScreenAreaSize = TNumericLimits<float>::Max();
+
+	MeshUtilities.MergeComponentsToStaticMesh(ComponentsToMerge, World, Settings, nullptr, nullptr, PackageName, AssetsToSync, MergedActorLocation, ScreenAreaSize, true);
+	*/
+	/**
+	//Place merged actor
+	UWorld* World = UniqueLevels[0]->OwningWorld;
+	FActorSpawnParameters Params;
+	Params.OverrideLevel = UniqueLevels[0];
+	FRotator MergedActorRotation(ForceInit);
+
+	AStaticMeshActor* MergedActor = World->SpawnActor<AStaticMeshActor>(MergedActorLocation, MergedActorRotation, Params);
+	MergedActor->GetStaticMeshComponent()->SetStaticMesh(MergedMesh);
+	MergedActor->SetActorLabel(MergedMesh->GetName());
+	World->UpdateCullDistanceVolumes(MergedActor, MergedActor->GetStaticMeshComponent());
+
+	*/
+
+
 }
 
 FName FMeshPlacerEdModeToolkit::GetToolkitFName() const
