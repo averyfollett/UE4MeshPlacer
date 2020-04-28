@@ -1,7 +1,7 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
-#include "MeshPlacer.h"
-#include "MeshPlacerEdMode.h"
+#include "../Public/MeshPlacer.h"
+#include "../Public/MeshPlacerEdMode.h"
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerModule"
 

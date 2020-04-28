@@ -1,7 +1,7 @@
 // Copyright 1998-2019 Epic Games, Inc. All Rights Reserved.
 
-#include "MeshPlacerEdMode.h"
-#include "MeshPlacerEdModeToolkit.h"
+#include "../Public/MeshPlacerEdMode.h"
+#include "../Public/MeshPlacerEdModeToolkit.h"
 #include "Toolkits/ToolkitManager.h"
 #include "EditorModeManager.h"
 
@@ -44,7 +44,3 @@ bool FMeshPlacerEdMode::UsesToolkits() const
 {
 	return true;
 }
-
-
-
-
