@@ -21,7 +21,7 @@
 #include "MergeActors/Private/MergeProxyUtils/Utils.h"
 #include "MeshUtilities.h"
 #include "Modules/ModuleManager.h"
-//#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
+#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
@@ -143,10 +143,23 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 				.AutoHeight()
 				.Padding(0.0, 20.0, 0.0, 0.0)
 				[
-					// This is the button to make the object tile
+					// This is the button to tile the selected object
 					SNew(SButton)
 					.Text(LOCTEXT("TileButtonLabel", "Click to Tile!"))
 					.OnClicked_Raw(this, &FMeshPlacerEdModeToolkit::OnButtonClick)
+				]
+
+
+
+			+SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				.Padding(0.0, 20.0, 0.0, 0.0)
+				[
+					// This is the button to merge the selected meshes
+					SNew(SButton)
+					.Text(LOCTEXT("MergeButtonLabel", "Click to Merge!"))
+					.OnClicked_Raw(this, &FMeshPlacerEdModeToolkit::MergeMeshes)
 				]
 		];
 		
@@ -201,6 +214,9 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 	// We're done moving actors so close transaction
 	GEditor->EndTransaction();
 
+	//Run merging function if enabled
+	// TO-DO: Make checkbox and call merge function here
+
 	return FReply::Handled();
 }
 
@@ -244,37 +260,100 @@ void FMeshPlacerEdModeToolkit::SetDistanceBetweenActors(float d)
 	distanceBetweenActors = d;
 }
 
-void FMeshPlacerEdModeToolkit::MergeMeshes()
+FReply FMeshPlacerEdModeToolkit::MergeMeshes()
 {
 	// WORK IN PROGRESS
-	/**
+
 	const IMeshMergeUtilities& MeshUtilities = FModuleManager::Get().LoadModuleChecked<IMeshMergeModule>("MeshMergeUtilities").GetUtilities();
 
+	USelection* SelectedActors = GEditor->GetSelectedActors();
+	
+	TArray<AActor*> Actors;
+	TArray<ULevel*> UniqueLevels;
+	
+	for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
+	{
+		
+		AActor* Actor = Cast<AActor>(*Iter);
+		if (Actor)
+		{
+			
+			Actors.Add(Actor);
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, Actor->GetActorLocation().ToString());
+			UniqueLevels.AddUnique(Actor->GetLevel());
+			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::FromInt(UniqueLevels.Num()));
+		}
+		
+	}
+	
+	//UPrimitiveComponent* testcomp = Actors[0]->FindComponentByClass<UPrimitiveComponent>();
+	
+	// Extracting static mesh components from the selected mesh components in the dialog
+	//TSharedPtr<SMeshMergingDialog> MergingDialog;
+	//const TArray<TSharedPtr<FMergeComponentData>>& SelectedComponents = MergingDialog->GetSelectedComponents();
+	
 	TArray<UPrimitiveComponent*> ComponentsToMerge; //The components that will be merged
+
+	for (AActor* Actor : Actors)
+	{
+		ComponentsToMerge.Add(Actor->FindComponentByClass<UPrimitiveComponent>());
+	}
+	
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::FromInt(ComponentsToMerge.Num()));
+
+	FScopedSlowTask SlowTask(0, LOCTEXT("MergingActorsSlowTask", "Merging actors..."));
+	SlowTask.MakeDialog();
+
 	UWorld* World = ComponentsToMerge[0]->GetWorld(); //Reference to the world
+	
 	FMeshMergingSettings Settings; //Merging settings
 	Settings.bMergePhysicsData = true;
 	Settings.LODSelectionType = EMeshLODSelectionType::AllLODs;
-	FString PackageName = "OUTPUT";
+	const FString PackageName = "MERGEDACTOR";
 	TArray<UObject*> AssetsToSync;
-	FVector MergedActorLocation;
+	FVector MergedActorLocation(0.0, 0.0, 0.0);
 	const float ScreenAreaSize = TNumericLimits<float>::Max();
+	/***/
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("Version without merge 888"));
 
-	MeshUtilities.MergeComponentsToStaticMesh(ComponentsToMerge, World, Settings, nullptr, nullptr, PackageName, AssetsToSync, MergedActorLocation, ScreenAreaSize, true);
-	*/
+	for (UPrimitiveComponent * Component : ComponentsToMerge)
+		if (IsValid(Component))
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("Component is valid"));
+	if (IsValid(World))
+		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("World is valid"));
+
+	// TO-DO: This line is causing the engine to crash and I am currently investigating why
+	//MeshUtilities.MergeComponentsToStaticMesh(ComponentsToMerge, World, Settings, nullptr, nullptr, PackageName, AssetsToSync, MergedActorLocation, ScreenAreaSize, true);
+	
+	
 	/**
-	//Place merged actor
-	UWorld* World = UniqueLevels[0]->OwningWorld;
-	FActorSpawnParameters Params;
-	Params.OverrideLevel = UniqueLevels[0];
-	FRotator MergedActorRotation(ForceInit);
+	UStaticMesh* MergedMesh = nullptr;
+	if (AssetsToSync.FindItemByClass(&MergedMesh))
+	{
+		const FScopedTransaction Transaction(LOCTEXT("PlaceMergedActor", "Place Merged Actor"));
+		UniqueLevels[0]->Modify();
 
-	AStaticMeshActor* MergedActor = World->SpawnActor<AStaticMeshActor>(MergedActorLocation, MergedActorRotation, Params);
-	MergedActor->GetStaticMeshComponent()->SetStaticMesh(MergedMesh);
-	MergedActor->SetActorLabel(MergedMesh->GetName());
-	World->UpdateCullDistanceVolumes(MergedActor, MergedActor->GetStaticMeshComponent());
+		//Place merged static mesh actor
+		//UWorld* World = UniqueLevels[0]->OwningWorld;
+		FActorSpawnParameters Params;
+		Params.OverrideLevel = UniqueLevels[0];
+		FRotator MergedActorRotation(ForceInit);
+
+		AStaticMeshActor* MergedActor = World->SpawnActor<AStaticMeshActor>(MergedActorLocation, MergedActorRotation, Params);
+		MergedActor->GetStaticMeshComponent()->SetStaticMesh(MergedMesh);
+		MergedActor->SetActorLabel(MergedMesh->GetName());
+		World->UpdateCullDistanceVolumes(MergedActor, MergedActor->GetStaticMeshComponent());
+		// Remove source actors
+		for (AActor* Actor : Actors)
+		{
+			Actor->Destroy();
+		}
+	}
 
 	*/
+
+	return FReply::Handled();
+	
 }
 
 FName FMeshPlacerEdModeToolkit::GetToolkitFName() const

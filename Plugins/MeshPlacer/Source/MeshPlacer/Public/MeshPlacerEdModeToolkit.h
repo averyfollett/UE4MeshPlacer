@@ -33,7 +33,7 @@ public:
 	void SetZCopies(int32 c);
 	TOptional<float> GetDistanceBetweenActors() const;
 	void SetDistanceBetweenActors(float d);
-	void MergeMeshes();
+	FReply MergeMeshes();
 
 private:
 
