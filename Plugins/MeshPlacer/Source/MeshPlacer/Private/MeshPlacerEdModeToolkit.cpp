@@ -21,7 +21,8 @@
 #include "MergeActors/Private/MergeProxyUtils/Utils.h"
 #include "MeshUtilities.h"
 #include "Modules/ModuleManager.h"
-#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
+//#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
+#include "UObject/UnrealType.h"
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
@@ -313,6 +314,7 @@ FReply FMeshPlacerEdModeToolkit::MergeMeshes()
 	TArray<UObject*> AssetsToSync;
 	FVector MergedActorLocation(0.0, 0.0, 0.0);
 	const float ScreenAreaSize = TNumericLimits<float>::Max();
+
 	/***/
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("Version without merge 888"));
 
@@ -323,7 +325,8 @@ FReply FMeshPlacerEdModeToolkit::MergeMeshes()
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("World is valid"));
 
 	// TO-DO: This line is causing the engine to crash and I am currently investigating why
-	//MeshUtilities.MergeComponentsToStaticMesh(ComponentsToMerge, World, Settings, nullptr, nullptr, PackageName, AssetsToSync, MergedActorLocation, ScreenAreaSize, true);
+	//I BELIVE IT IS POSSIBLE TO GET THE OUTER SOMEHOW FROM UPROPERTY BUT I DON'T KNOW HOW YET AND I AM REALLY EXHAUSTED AND CAN'T FIGURE IT OUT YET
+	MeshUtilities.MergeComponentsToStaticMesh(ComponentsToMerge, World, Settings, nullptr, nullptr, PackageName, AssetsToSync, MergedActorLocation, ScreenAreaSize, false);
 	
 	
 	/**
