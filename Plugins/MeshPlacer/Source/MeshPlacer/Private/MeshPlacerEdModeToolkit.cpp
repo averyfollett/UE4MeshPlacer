@@ -21,8 +21,11 @@
 #include "MergeActors/Private/MergeProxyUtils/Utils.h"
 #include "MeshUtilities.h"
 #include "Modules/ModuleManager.h"
-//#include "MergeActors/Private/MeshMergingTool/SMeshMergingDialog.h"
 #include "UObject/UnrealType.h"
+#include "IContentBrowserSingleton.h"
+#include "ContentBrowserModule.h"
+#include "AssetRegistryModule.h"
+#include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "FMeshPlacerEdModeToolkit"
 
@@ -40,11 +43,16 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 		}
 	};
 	
+
+
+	// UI Code
 	SAssignNew(ToolkitWidget, SBorder)
 		.HAlign(HAlign_Center)
 		.Padding(20)
 		.IsEnabled_Static(&Locals::IsWidgetEnabled)
 		[
+
+			// Info at top of the UI
 			SNew(SVerticalBox)
 			+ SVerticalBox::Slot()
 			.AutoHeight()
@@ -57,7 +65,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 			]
 
 
-
+			// X Copies
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -78,6 +86,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 
 
 
+			// Y Copies
 			+SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -98,6 +107,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 
 
 
+			// Z Copies
 			+SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -118,6 +128,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 
 
 
+			// X Offset
 			+SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -125,20 +136,63 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 				[
 					SNew(STextBlock)
 					.AutoWrapText(true)
-					.Text(LOCTEXT("DistanceHelperLabel", "Offset Distance:"))
+					.Text(LOCTEXT("XOffsetHelperLabel", "X Offset"))
 				]
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
 				[
 					SNew(SNumericEntryBox<float>)
-					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetDistanceBetweenActors)
-					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetDistanceBetweenActors)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetOffsetX)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetOffsetX)
 					.AllowSpin(true)
 				]
 
 
 
+			// Y Offset
+			+SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(STextBlock)
+					.AutoWrapText(true)
+					.Text(LOCTEXT("YOffsetHelperLabel", "Y Offset"))
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(SNumericEntryBox<float>)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetOffsetY)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetOffsetY)
+					.AllowSpin(true)
+				]
+
+
+
+			// Z Offset
+			+SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(STextBlock)
+					.AutoWrapText(true)
+					.Text(LOCTEXT("ZOffsetHelperLabel", "Z Offset"))
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Center)
+				.AutoHeight()
+				[
+					SNew(SNumericEntryBox<float>)
+					.Value_Raw(this, &FMeshPlacerEdModeToolkit::GetOffsetZ)
+					.OnValueChanged_Raw(this, &FMeshPlacerEdModeToolkit::SetOffsetZ)
+					.AllowSpin(true)
+				]
+
+
+
+			// Click to Tile Button
 			+ SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -152,6 +206,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 
 
 
+			// Click to Merge Button
 			+SVerticalBox::Slot()
 				.HAlign(HAlign_Center)
 				.AutoHeight()
@@ -169,6 +224,7 @@ void FMeshPlacerEdModeToolkit::Init(const TSharedPtr<IToolkitHost>& InitToolkitH
 
 FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 {
+	// Get all the currently selected actors
 	USelection* SelectedActors = GEditor->GetSelectedActors();
 
 	// Let editor know that we're about to do something that we want to undo/redo
@@ -179,12 +235,14 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 	{
 		if (AStaticMeshActor* LevelActor = Cast<AStaticMeshActor>(*Iter))
 		{
+			// Reference to the actor we want to spawn
 			AStaticMeshActor* ActorToSpawn = LevelActor;
 
+			// Copy info from current actor to be used on duplicated actor
 			FActorSpawnParameters SpawnParams;
-			//SpawnParams.Name = FName("DUPLICATED");
 			SpawnParams.Template = LevelActor;
 
+			// Set up basic transform for the duplicated actor
 			FRotator Rot(0.0, 0.0, 0.0);
 			FVector Trans(5.0, 5.0, 5.0);
 			FVector Scale(1.0, 1.0, 1.0);
@@ -199,13 +257,15 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 				{
 					for (int z = 0; z <= numZCopies; z++)
 					{
+						// Spawn the actor at the current location
 						SpawnedActor = LevelActor->GetWorld()->SpawnActorAbsolute<AStaticMeshActor>(
 							ActorToSpawn->GetClass(), ActorToSpawn->GetTransform(), SpawnParams);
 
+						// Update the location of the new actor using offsets
 						SpawnedActor->SetActorLocation(FVector(
-							SpawnedActor->GetActorLocation().X + (x * distanceBetweenActors), 
-							SpawnedActor->GetActorLocation().Y + (y * distanceBetweenActors),
-							SpawnedActor->GetActorLocation().Z + (z * distanceBetweenActors)));
+							SpawnedActor->GetActorLocation().X + (x * offsetX),
+							SpawnedActor->GetActorLocation().Y + (y * offsetY),
+							SpawnedActor->GetActorLocation().Z + (z * offsetZ)));
 					}
 				}
 			}
@@ -214,9 +274,6 @@ FReply FMeshPlacerEdModeToolkit::OnButtonClick()
 
 	// We're done moving actors so close transaction
 	GEditor->EndTransaction();
-
-	//Run merging function if enabled
-	// TO-DO: Make checkbox and call merge function here
 
 	return FReply::Handled();
 }
@@ -246,9 +303,19 @@ TOptional<int32> FMeshPlacerEdModeToolkit::GetZCopies() const
 	return numZCopies;
 }
 
-TOptional<float> FMeshPlacerEdModeToolkit::GetDistanceBetweenActors() const
+TOptional<float> FMeshPlacerEdModeToolkit::GetOffsetX() const
 {
-	return distanceBetweenActors;
+	return offsetX;
+}
+
+TOptional<float> FMeshPlacerEdModeToolkit::GetOffsetY() const
+{
+	return offsetY;
+}
+
+TOptional<float> FMeshPlacerEdModeToolkit::GetOffsetZ() const
+{
+	return offsetZ;
 }
 
 void FMeshPlacerEdModeToolkit::SetZCopies(int32 c)
@@ -256,107 +323,114 @@ void FMeshPlacerEdModeToolkit::SetZCopies(int32 c)
 	numZCopies = c;
 }
 
-void FMeshPlacerEdModeToolkit::SetDistanceBetweenActors(float d)
+void FMeshPlacerEdModeToolkit::SetOffsetX(float o)
 {
-	distanceBetweenActors = d;
+	offsetX = o;
+}
+
+void FMeshPlacerEdModeToolkit::SetOffsetY(float o)
+{
+	offsetY = o;
+}
+
+void FMeshPlacerEdModeToolkit::SetOffsetZ(float o)
+{
+	offsetZ = o;
 }
 
 FReply FMeshPlacerEdModeToolkit::MergeMeshes()
 {
-	// WORK IN PROGRESS
-
+	// Get reference to Mesh Utilities which we need later
 	const IMeshMergeUtilities& MeshUtilities = FModuleManager::Get().LoadModuleChecked<IMeshMergeModule>("MeshMergeUtilities").GetUtilities();
 
+	// Get references to the currently selected actors
 	USelection* SelectedActors = GEditor->GetSelectedActors();
 	
 	TArray<AActor*> Actors;
 	TArray<ULevel*> UniqueLevels;
 	
+	// Add each actor and actor's level to arrays
 	for (FSelectionIterator Iter(*SelectedActors); Iter; ++Iter)
 	{
-		
 		AActor* Actor = Cast<AActor>(*Iter);
 		if (Actor)
 		{
-			
 			Actors.Add(Actor);
-			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, Actor->GetActorLocation().ToString());
 			UniqueLevels.AddUnique(Actor->GetLevel());
-			//GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::FromInt(UniqueLevels.Num()));
 		}
-		
 	}
-	
-	//UPrimitiveComponent* testcomp = Actors[0]->FindComponentByClass<UPrimitiveComponent>();
-	
-	// Extracting static mesh components from the selected mesh components in the dialog
-	//TSharedPtr<SMeshMergingDialog> MergingDialog;
-	//const TArray<TSharedPtr<FMergeComponentData>>& SelectedComponents = MergingDialog->GetSelectedComponents();
 	
 	TArray<UPrimitiveComponent*> ComponentsToMerge; //The components that will be merged
 
 	for (AActor* Actor : Actors)
 	{
+		// Add each primitive component to an array (these are the components that we will merge later)
 		ComponentsToMerge.Add(Actor->FindComponentByClass<UPrimitiveComponent>());
 	}
-	
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::FromInt(ComponentsToMerge.Num()));
 
+	// Make UI popup to notify the user of the merging process
 	FScopedSlowTask SlowTask(0, LOCTEXT("MergingActorsSlowTask", "Merging actors..."));
 	SlowTask.MakeDialog();
 
+	// Initialize important variables for the merging process
 	UWorld* World = ComponentsToMerge[0]->GetWorld(); //Reference to the world
-	
 	FMeshMergingSettings Settings; //Merging settings
 	Settings.bMergePhysicsData = true;
 	Settings.LODSelectionType = EMeshLODSelectionType::AllLODs;
-	const FString PackageName = "MERGEDACTOR";
-	TArray<UObject*> AssetsToSync;
-	FVector MergedActorLocation(0.0, 0.0, 0.0);
+	const FString PackageName = "/Content/MERGEDACTOR"; //Directory/filename of the merged actor
+	TArray<UObject*> AssetsToSync; //List of any new assets that need to be synced to the content browser
+	FVector MergedActorLocation(0.0, 0.0, 0.0); //Location to spawn the new merged actor
 	const float ScreenAreaSize = TNumericLimits<float>::Max();
 
-	/***/
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("Version without merge 888"));
-
+	// Basic checks to make sure the world and all components are valid
 	for (UPrimitiveComponent * Component : ComponentsToMerge)
 		if (IsValid(Component))
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("Component is valid"));
 	if (IsValid(World))
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("World is valid"));
 
-	// TO-DO: This line is causing the engine to crash and I am currently investigating why
-	//I BELIVE IT IS POSSIBLE TO GET THE OUTER SOMEHOW FROM UPROPERTY BUT I DON'T KNOW HOW YET AND I AM REALLY EXHAUSTED AND CAN'T FIGURE IT OUT YET
+	// Finally, we run the merge function
 	MeshUtilities.MergeComponentsToStaticMesh(ComponentsToMerge, World, Settings, nullptr, nullptr, PackageName, AssetsToSync, MergedActorLocation, ScreenAreaSize, false);
 	
+	/** // This creates the new merged mesh file
+	FAssetRegistryModule& AssetRegistry = FModuleManager::Get().LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	int32 AssetCount = AssetsToSync.Num();
+	for (int32 AssetIndex = 0; AssetIndex < AssetCount; AssetIndex++)
+	{
+		AssetRegistry.AssetCreated(AssetsToSync[AssetIndex]);
+		GEditor->BroadcastObjectReimported(AssetsToSync[AssetIndex]);
+	}
+
+	//Also notify the content browser that the new assets exists
+	FContentBrowserModule& ContentBrowserModule = FModuleManager::Get().LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	ContentBrowserModule.Get().SyncBrowserToAssets(AssetsToSync, true);
+	*/
 	
-	/**
 	UStaticMesh* MergedMesh = nullptr;
+	
+	// Find the merged mesh we just created
 	if (AssetsToSync.FindItemByClass(&MergedMesh))
 	{
-		const FScopedTransaction Transaction(LOCTEXT("PlaceMergedActor", "Place Merged Actor"));
+		// Enable modifications for the level
 		UniqueLevels[0]->Modify();
 
-		//Place merged static mesh actor
-		//UWorld* World = UniqueLevels[0]->OwningWorld;
+		// Place merged static mesh actor
 		FActorSpawnParameters Params;
 		Params.OverrideLevel = UniqueLevels[0];
 		FRotator MergedActorRotation(ForceInit);
-
 		AStaticMeshActor* MergedActor = World->SpawnActor<AStaticMeshActor>(MergedActorLocation, MergedActorRotation, Params);
 		MergedActor->GetStaticMeshComponent()->SetStaticMesh(MergedMesh);
 		MergedActor->SetActorLabel(MergedMesh->GetName());
 		World->UpdateCullDistanceVolumes(MergedActor, MergedActor->GetStaticMeshComponent());
-		// Remove source actors
+		
+		// Remove original actors from the level
 		for (AActor* Actor : Actors)
 		{
 			Actor->Destroy();
 		}
 	}
 
-	*/
-
 	return FReply::Handled();
-	
 }
 
 FName FMeshPlacerEdModeToolkit::GetToolkitFName() const

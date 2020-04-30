@@ -31,8 +31,12 @@ public:
 	void SetXCopies(int32 c);
 	void SetYCopies(int32 c);
 	void SetZCopies(int32 c);
-	TOptional<float> GetDistanceBetweenActors() const;
-	void SetDistanceBetweenActors(float d);
+	TOptional<float> GetOffsetX() const;
+	TOptional<float> GetOffsetY() const;
+	TOptional<float> GetOffsetZ() const;
+	void SetOffsetX(float o);
+	void SetOffsetY(float o);
+	void SetOffsetZ(float o);
 	FReply MergeMeshes();
 
 private:
@@ -41,5 +45,5 @@ private:
 
 	/** Custom Variables */
 	int32 numXCopies, numYCopies, numZCopies;
-	float distanceBetweenActors;
+	float offsetX, offsetY, offsetZ;
 };
