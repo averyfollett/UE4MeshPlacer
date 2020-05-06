@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "MeshPlacer",
+	"Description": "A tool to help artists tile objects in the level editor",
+	"Category": "Other",
+	"CreatedBy": "Avery Follett & Alex Wood",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "MeshPlacer",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
